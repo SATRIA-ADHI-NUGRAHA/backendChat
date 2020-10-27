@@ -1,3 +1,4 @@
+const bodyParser = require('body-parser')
 const db = require('../config/db')
 
 const users = {
@@ -5,22 +6,28 @@ const users = {
     return new Promise((resolve,reject) => {
      db.query(`SELECT * FROM users`,
      (err, result) => {
-       err?reject(new Error(err)): resolve(result)
+      if (err) {
+        reject(new Error(err))
+      } else {
+        resolve(result)
+      }
      })
     })
    },
    register: (data) => {
     return new Promise((resolve,reject) => {
-      db.query(`INSERT INTO users (username,email,password,image,active) 
-      VALUES('${data.username}','${data.email}','${data.password}','${data.image}','1')`,
-      (err,result) => {
-        err ? reject(new Error(err)): resolve(result)
+      db.query('INSERT INTO users SET ?', data, (err,result) => {
+        if (err) {
+          reject(new Error(err))
+        } else {
+          resolve(result)
+        }
       })
     }) 
-},
+  },
   login: (data) => {
     return new Promise((resolve, reject) => {
-      db.query(`SELECT * FROM users WHERE email = ?`, data.email, (err, result) => {
+      db.query(`SELECT * FROM users WHERE email = '${data.email}'`, (err, result) => {
           if (err) {
             reject(new Error(err.message));
           } else {
@@ -28,6 +35,29 @@ const users = {
           }
         }
       )
+    })
+  },
+  updateRefreshToken: (token, id) => {
+    return new Promise((resolve, reject) => {
+      db.query(`UPDATE users SET refreshToken='${token}' WHERE id='${id}'`,
+        (err, result) => {
+          if (err) {
+            reject(new Error(err))
+          } else {
+            resolve(result)
+          }
+        })
+    })
+  },
+  checkRefreshToken: (refreshToken) => {
+    return new Promise((resolve, reject) => {
+      db.query(`SELECT * FROM users WHERE refreshToken = '${refreshToken}'`, (err, result) => {
+        if (err) {
+          reject(new Error(err))
+        } else {
+          resolve(result)
+        }
+      })
     })
   },
   // Check Emall
@@ -43,19 +73,18 @@ const users = {
     return new Promise((resolve,reject) => {
      db.query(`SELECT * FROM users WHERE id='${id}'`,
      (err, result) => {
-       err?reject(new Error(err)): resolve(result)
+      if (err) {
+        reject(new Error(err))
+      }else{
+        resolve(result)
+      }
      })
     })
    },
-  updateUsers:(data, id) => {
+  updateUser:(data, id) => {
     console.log(data);
     return new Promise((resolve,reject) => {
-      db.query(`UPDATE users SET 
-      username='${data.username}',
-      email='${data.email}',
-      phone_number='${data.phone_number}',
-      image='${data.image}'
-      WHERE id = '${id}'`,
+      db.query('UPDATE users SET ? WHERE id= ?', [data, id],
       (err,result) => {
         if (err) {
           reject(new Error(err))
@@ -65,21 +94,51 @@ const users = {
       })
     })
   },
+  updateImage:(data, id) => {
+    return new Promise((resolve, reject) => {
+      db.query(`UPDATE users SET ? WHERE id = ?`, [data, id], (err, res) => {
+        if(err) {
+          reject(new Error(err))
+        }else {
+          resolve(res)
+        }
+      })
+    })
+  },
   updateVerify: (email) => {
     return new Promise((resolve,reject) => {
-      db.query(`UPDATE users SET active=1 WHERE email='${email}'`,
+      db.query(`UPDATE users SET active = 1 WHERE email='${email}'`,
       (err,result) =>{
-        err?reject(new Error(err)) : resolve(result)
+        if (err) {
+          reject(new Error(err.message));
+        } else {
+          resolve(result);
+        }
       })
     })
   },
   deleteUsers: (id) => {
     return new Promise((resolve,reject) => {
       db.query(`DELETE FROM users WHERE id=${id}`, (err,result) => {
-        err?reject(new Error(err)) : resolve(result)
+        if (err) {
+          reject(new Error(err.message));
+        } else {
+          resolve(result);
+        }
+      })
+    })
+  },
+  deleteMsg: (id) => {
+    return new Promise((resolve, reject) => {
+      db.query(`DELETE FROM message WHERE id=${id}`, (err,result) => {
+        if (err) {
+          reject(new Error(err.message));
+        } else {
+          resolve(result);
+        }
       })
     })
   }
-  }
+}
 
 module.exports = users 
